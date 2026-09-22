@@ -1,0 +1,118 @@
+import { HISTORICAL_SOURCES } from './sources';
+import { Civilization } from './types';
+
+export const CIVILIZATIONS: Civilization[] = [
+  {
+    id: 'indus-valley',
+    name: 'Indus Valley Civilization',
+    period: 'Bronze Age',
+    timeRange: 'c. 3300 BCE - 1300 BCE (Mature: 2600-1900 BCE)',
+    region: 'Northwest South Asia (Indus & Ghaggar-Hakra basins)',
+    tagline: 'Pioneers of urban planning, hydraulic engineering, and standardized trade.',
+    description:
+      'Spanning over a million square kilometers across modern India and Pakistan, the Indus Valley (Harappan) Civilization was one of the earliest Old World civilizations. Renowned for its sophisticated orthogonal grid cities, underground drainage, standardized weights, and peaceful civic governance.',
+    status: 'active',
+    featured: true,
+    topicIds: ['ivc-urban-planning', 'ivc-water-systems', 'ivc-trade-commerce', 'ivc-crafts-seals'],
+    sources: [
+      HISTORICAL_SOURCES.asi_mohenjodaro,
+      HISTORICAL_SOURCES.asi_lothal,
+      HISTORICAL_SOURCES.asi_dholavira,
+      HISTORICAL_SOURCES.unesco_dholavira,
+      HISTORICAL_SOURCES.kenoyer_ancient_cities,
+    ],
+  },
+  {
+    id: 'mauryan-empire',
+    name: 'Mauryan Empire',
+    period: 'Iron Age / Classical Period',
+    timeRange: 'c. 322 BCE - 185 BCE',
+    region: 'Pan-Indian Subcontinent (Capital: Pataliputra)',
+    tagline: 'Unification of India, Ashokan Edicts, and statecraft economics.',
+    description:
+      "Founded by Chandragupta Maurya and philosopher Chanakya, the Mauryan Empire established one of the largest empires in world history, culminating in Ashoka the Great's moral statecraft and rock-cut edicts of Dhamma.",
+    status: 'coming_soon',
+    featured: false,
+    topicIds: [],
+    sources: [
+      {
+        id: 'asi_ashoka_edicts',
+        title: 'Corpus Inscriptionum Indicarum: Inscriptions of Asoka',
+        authorOrInstitution: 'Archaeological Survey of India / E. Hultzsch',
+        yearOrPeriod: '1925',
+        sourceType: 'primary',
+        confidence: 'verified',
+      },
+    ],
+  },
+  {
+    id: 'gupta-empire',
+    name: 'Gupta Empire',
+    period: 'Classical Golden Age',
+    timeRange: 'c. 319 CE - 550 CE',
+    region: 'Northern & Central India',
+    tagline: 'Zenith of mathematics, astronomy, Sanskrit literature, and temple art.',
+    description:
+      "Known as the Golden Age of India, marked by Aryabhata's mathematical discoveries, Kalidasa's poetry, iron pillar metallurgy in Delhi, and the flourishing of Nalanda University.",
+    status: 'coming_soon',
+    featured: false,
+    topicIds: [],
+    sources: [],
+  },
+  {
+    id: 'chola-dynasty',
+    name: 'Imperial Chola Dynasty',
+    period: 'Medieval Maritime Empire',
+    timeRange: 'c. 848 CE - 1279 CE',
+    region: 'Southern India, Bay of Bengal & Southeast Asia',
+    tagline: 'Granite super-temples, bronze casting, local democracy, and naval supremacy.',
+    description:
+      'Architects of the Brihadisvara Temple at Thanjavur, masters of lost-wax bronze Nataraja sculptures, village assembly democracy (Uttiramerur inscriptions), and maritime trade routes across the Indian Ocean.',
+    status: 'coming_soon',
+    featured: false,
+    topicIds: [],
+    sources: [],
+  },
+  {
+    id: 'vijayanagara-empire',
+    name: 'Vijayanagara Empire',
+    period: 'Late Medieval Era',
+    timeRange: 'c. 1336 CE - 1646 CE',
+    region: 'Deccan & Southern India (Capital: Hampi)',
+    tagline: 'Grand city of victory, stone chariots, and vibrant market bazaars.',
+    description:
+      'Celebrated by traveler Domingo Paes as a global hub of gemstone commerce, breathtaking boulder-integrated architecture at Hampi, and cultural patron of Carnatic traditions.',
+    status: 'coming_soon',
+    featured: false,
+    topicIds: [],
+    sources: [],
+  },
+  {
+    id: 'mughal-period',
+    name: 'Mughal Period',
+    period: 'Early Modern Era',
+    timeRange: 'c. 1526 CE - 1857 CE',
+    region: 'Northern & Central Subcontinent',
+    tagline: 'Synthesis of Indo-Islamic architecture, painting, and garden design.',
+    description:
+      'Famous for monumental monuments (Taj Mahal, Red Fort, Fatehpur Sikri), miniature painting ateliers, musical synthesis, and administrative agrarian mapping.',
+    status: 'coming_soon',
+    featured: false,
+    topicIds: [],
+    sources: [],
+  },
+  {
+    id: 'freedom-movement',
+    name: 'Indian Freedom Movement',
+    period: 'Modern Era',
+    timeRange: '1857 CE - 1947 CE',
+    region: 'Subcontinent-wide',
+    tagline: "The world's largest mass non-violent resistance and democratic rebirth.",
+    description:
+      "From the 1857 uprising and the Swadeshi movement to Satyagraha, INA, and Independence in 1947, charting the creation of the world's largest constitutional democracy.",
+    status: 'coming_soon',
+    featured: false,
+    topicIds: [],
+    sources: [],
+  },
+];

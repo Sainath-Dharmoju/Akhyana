@@ -1,32 +1,106 @@
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
-import { useColorScheme } from 'react-native';
-
-import { Colors } from '@/constants/theme';
+import React from 'react';
+import { View, StyleSheet, Platform, Text } from 'react-native';
+import { Tabs } from 'expo-router';
+import { Colors, Spacing } from '@/constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AppTabs() {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const colors = Colors.light;
+  const insets = useSafeAreaInsets();
+  
+  const bottomInset = Math.max(insets.bottom, 16);
 
   return (
-    <NativeTabs
-      backgroundColor={colors.background}
-      indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.text } }}>
-      <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/home.png')}
-          renderingMode="template"
-        />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="explore">
-        <NativeTabs.Trigger.Label>Explore</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/explore.png')}
-          renderingMode="template"
-        />
-      </NativeTabs.Trigger>
-    </NativeTabs>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.cardBorder,
+          elevation: 0,
+          shadowOpacity: 0.1,
+          height: 60 + bottomInset,
+          paddingBottom: bottomInset,
+          paddingTop: 8,
+        },
+        tabBarActiveTintColor: colors.oliveDeep,
+        tabBarInactiveTintColor: colors.oliveMuted,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          marginTop: 2,
+        },
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Learn',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="📖" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="games"
+        options={{
+          title: 'Games',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="🎮" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="explore"
+        options={{
+          title: 'Explore',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="🧭" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="progress"
+        options={{
+          title: 'Progress',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="🏆" focused={focused} />
+          ),
+        }}
+      />
+    </Tabs>
   );
 }
+
+function TabIcon({ name, focused }: { name: string; focused: boolean }) {
+  const colors = Colors.light;
+  
+  // Render the actual emoji characters directly as visible text/glyphs.
+  // We use color to tint on supporting platforms, but omit shadow/opacity hacks
+  // that cause emojis to vanish or render as pale circular blobs on Android.
+  return (
+    <View style={[
+      styles.iconContainer, 
+      focused && { backgroundColor: colors.sageLight }
+    ]}>
+      <Text style={{
+        fontSize: 22,
+        color: focused ? colors.oliveDeep : colors.oliveDark,
+        textAlign: 'center',
+        includeFontPadding: false,
+      }}>
+        {name}
+      </Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  iconContainer: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: 4,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
