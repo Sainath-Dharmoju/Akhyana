@@ -60,6 +60,15 @@ export default function AppTabs() {
         }}
       />
       <Tabs.Screen
+        name="heritage-voices"
+        options={{
+          title: 'Voices',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name="🏛️" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="progress"
         options={{
           title: 'Progress',

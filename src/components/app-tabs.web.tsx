@@ -27,6 +27,9 @@ export default function AppTabs() {
           <TabTrigger name="explore" href="/explore" asChild>
             <TabButton>EXPLORE</TabButton>
           </TabTrigger>
+          <TabTrigger name="heritage-voices" href="/heritage-voices" asChild>
+            <TabButton>VOICES</TabButton>
+          </TabTrigger>
           <TabTrigger name="progress" href="/progress" asChild>
             <TabButton>PROGRESS</TabButton>
           </TabTrigger>

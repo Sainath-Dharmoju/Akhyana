@@ -116,7 +116,7 @@ export const DECADE_DUEL_QUESTIONS: DecadeDuelQuestion[] = [
     correctIndex: 0,
     explanation: "The Fazal Ali Commission (with Panikkar and Kunzru) recommended reorganizing state boundaries along linguistic lines.",
     era: "1950s",
-    difficulty: "hard",
+    difficulty: "medium",
   },
 
   // --- 1960s: Green Revolution & Modern Institutions ---
@@ -169,7 +169,7 @@ export const DECADE_DUEL_QUESTIONS: DecadeDuelQuestion[] = [
     correctIndex: 0,
     explanation: "Norman Borlaug collaborated with Indian scientists to introduce Lerma Rojo and Sonora 64 strains.",
     era: "1960s",
-    difficulty: "hard",
+    difficulty: "medium",
   },
 
   // --- 1970s: Space Age, White Revolution & Self-Reliance ---
@@ -258,7 +258,7 @@ export const DECADE_DUEL_QUESTIONS: DecadeDuelQuestion[] = [
     correctIndex: 0,
     explanation: "PARAM 8000 was unveiled in 1991 as India’s first parallel supercomputer designed under Vijay Bhatkar.",
     era: "1980s",
-    difficulty: "hard",
+    difficulty: "medium",
   },
   {
     id: "q-1980s-03",
