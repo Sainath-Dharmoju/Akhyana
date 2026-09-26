@@ -37,7 +37,10 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "test:chronosearch": "npx tsx test_chronosearch.ts",
+    "test:device-matrix": "npx tsx test_device_matrix.ts",
+    "test": "npx tsx test_chronosearch.ts && npx tsx test_device_matrix.ts"
   },
   "private": true
 }
