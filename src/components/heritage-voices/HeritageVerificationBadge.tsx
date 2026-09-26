@@ -1,15 +1,31 @@
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import { ExpertVerificationStatus } from '@/types/heritage-voices';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
 
 interface Props {
   status: ExpertVerificationStatus;
+  isDemo?: boolean;
   showExplanation?: boolean;
 }
 
-export function HeritageVerificationBadge({ status, showExplanation = false }: Props) {
+export function HeritageVerificationBadge({ status, isDemo = false, showExplanation = false }: Props) {
   const colors = Colors.light;
+
+  if (isDemo) {
+    return (
+      <View style={styles.container}>
+        <View style={[styles.badge, { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder }]}>
+          <Text style={[styles.badgeText, { color: colors.oliveDark }]}>Demo Expert</Text>
+        </View>
+        {showExplanation && (
+          <Text style={[styles.explanation, { color: colors.textSecondary }]}>
+            Sample author profile for demonstration purposes.
+          </Text>
+        )}
+      </View>
+    );
+  }
 
   if (status === 'verified') {
     return (
@@ -19,7 +35,7 @@ export function HeritageVerificationBadge({ status, showExplanation = false }: P
         </View>
         {showExplanation && (
           <Text style={[styles.explanation, { color: colors.textSecondary }]}>
-            Author identity and professional background have been verified by Akhyana.
+            Akhyana has verified the author's identity and professional credentials.
           </Text>
         )}
       </View>

@@ -15,8 +15,9 @@ export default function ArticleSubmitScreen() {
   const insets = useSafeAreaInsets();
   const colors = Colors.light;
 
-  // Active author context for MVP (simulate logged in expert)
-  const [selectedAuthorId, setSelectedAuthorId] = useState<string>(HERITAGE_EXPERTS[0].id);
+  // For testing verification states in MVP demo:
+  // Active expert can be selected to simulate verified vs unverified/pending contributors
+  const [selectedAuthorId, setSelectedAuthorId] = useState<string>(HERITAGE_EXPERTS[0]?.id || '');
   const activeExpert = HERITAGE_EXPERTS.find((e) => e.id === selectedAuthorId);
 
   // Multi-step: 1 = Details, 2 = Sources, 3 = Review, 4 = Confirmation
@@ -32,7 +33,7 @@ export default function ArticleSubmitScreen() {
   const [evidenceSummary, setEvidenceSummary] = useState('');
   const [authorPerspective, setAuthorPerspective] = useState('');
 
-  // Sources State (At least one required)
+  // Sources State (At least one source/reference required)
   const [sources, setSources] = useState<HeritageSource[]>([]);
   const [newSourceTitle, setNewSourceTitle] = useState('');
   const [newSourceAuthor, setNewSourceAuthor] = useState('');
@@ -42,8 +43,10 @@ export default function ArticleSubmitScreen() {
 
   const [validationError, setValidationError] = useState('');
 
-  // Guard: Expert Verification Required
-  if (!activeExpert || activeExpert.verificationStatus !== 'verified') {
+  // Strict Access Control Guard:
+  const isVerifiedContributor = activeExpert && activeExpert.verificationStatus === 'verified';
+
+  if (!isVerifiedContributor) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.contentWrapper, { paddingTop: insets.top + 20 }]}>
@@ -55,7 +58,7 @@ export default function ArticleSubmitScreen() {
             <Text style={styles.warningIcon}>🔒</Text>
             <Text style={[styles.warningTitle, { color: colors.text }]}>Expert Verification Required</Text>
             <Text style={[styles.warningDesc, { color: colors.textSecondary }]}>
-              You need to complete Akhyana's expert verification process before submitting articles to Heritage Voices.
+              Only verified heritage experts and researchers can submit articles for review. Unverified contributors cannot publish or submit articles.
             </Text>
           </View>
         </View>
@@ -94,12 +97,12 @@ export default function ArticleSubmitScreen() {
   };
 
   const handleRemoveSource = (id: string) => {
-    setSources(sources.filter((s) => s.id !== id));
+    setSources(sources.filter((s: HeritageSource) => s.id !== id));
   };
 
   const handleStep2Next = () => {
     if (sources.length === 0) {
-      setValidationError('Please add at least one source or reference before continuing.');
+      setValidationError('At least one source / reference citation is required.');
       return;
     }
     setValidationError('');
@@ -107,13 +110,23 @@ export default function ArticleSubmitScreen() {
   };
 
   const handleSubmit = () => {
+    // Double check submission access control
+    if (!activeExpert || activeExpert.verificationStatus !== 'verified') {
+      setValidationError('Expert Verification Required: Only verified contributors can submit articles.');
+      return;
+    }
+    if (sources.length === 0) {
+      setValidationError('At least one source / reference citation is required.');
+      return;
+    }
+
     submitHeritageArticle({
       title: title.trim(),
       summary: summary.trim(),
       content: content.trim(),
       authorId: activeExpert.id,
       category,
-      tags: tagsText.split(',').map((t) => t.trim()).filter(Boolean),
+      tags: tagsText.split(',').map((t: string) => t.trim()).filter(Boolean),
       sources,
       contentNote: contentNote.trim() || undefined,
       evidenceSummary: evidenceSummary.trim() || undefined,
@@ -140,7 +153,7 @@ export default function ArticleSubmitScreen() {
           <View style={styles.header}>
             <Text style={[styles.title, { color: colors.text }]}>Submit Research Article</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Contributing as <Text style={{ fontWeight: '700' }}>{activeExpert.name}</Text> (Verified Contributor)
+              Contributing as <Text style={{ fontWeight: '700' }}>{activeExpert.name}</Text> ({activeExpert.isDemo ? 'Demo Expert' : 'Verified Contributor'})
             </Text>
 
             {/* Stepper indicator */}
@@ -164,7 +177,7 @@ export default function ArticleSubmitScreen() {
             <Text style={[styles.fieldLabel, { color: colors.text }]}>Article Title *</Text>
             <TextInput
               style={[styles.input, { borderColor: colors.cardBorder, color: colors.text }]}
-              placeholder="e.g. Excavation Horizons at Rakhigarhi..."
+              placeholder="e.g. Stratigraphical Sequences at Sannati..."
               placeholderTextColor={colors.textMuted}
               value={title}
               onChangeText={setTitle}
@@ -202,7 +215,7 @@ export default function ArticleSubmitScreen() {
             <Text style={[styles.fieldLabel, { color: colors.text }]}>Tags (comma-separated)</Text>
             <TextInput
               style={[styles.input, { borderColor: colors.cardBorder, color: colors.text }]}
-              placeholder="Archaeology, Inscriptions, Bronze Age"
+              placeholder="Archaeology, Inscriptions, Early Historic"
               placeholderTextColor={colors.textMuted}
               value={tagsText}
               onChangeText={setTagsText}
@@ -219,10 +232,10 @@ export default function ArticleSubmitScreen() {
               onChangeText={setContent}
             />
 
-            <Text style={[styles.fieldLabel, { color: colors.text }]}>Content Note (Optional sensitive content notice)</Text>
+            <Text style={[styles.fieldLabel, { color: colors.text }]}>Content Note (Optional sensitive topic notice)</Text>
             <TextInput
               style={[styles.input, { borderColor: colors.cardBorder, color: colors.text }]}
-              placeholder="e.g. Discusses human skeletal remains..."
+              placeholder="e.g. Discusses excavation of ancient burial urns..."
               placeholderTextColor={colors.textMuted}
               value={contentNote}
               onChangeText={setContentNote}
@@ -231,7 +244,7 @@ export default function ArticleSubmitScreen() {
             <Text style={[styles.fieldLabel, { color: colors.text }]}>Evidence Summary (Archaeological / Archival Records)</Text>
             <TextInput
               style={[styles.input, { borderColor: colors.cardBorder, color: colors.text, minHeight: 60 }]}
-              placeholder="Concrete stratigraphical or archival records..."
+              placeholder="Concrete empirical, stratigraphic, or epigraphic evidence..."
               placeholderTextColor={colors.textMuted}
               multiline
               numberOfLines={3}
@@ -239,10 +252,10 @@ export default function ArticleSubmitScreen() {
               onChangeText={setEvidenceSummary}
             />
 
-            <Text style={[styles.fieldLabel, { color: colors.text }]}>Author Perspective (Interpretation)</Text>
+            <Text style={[styles.fieldLabel, { color: colors.text }]}>Author Perspective (Analysis & Interpretation)</Text>
             <TextInput
               style={[styles.input, { borderColor: colors.cardBorder, color: colors.text, minHeight: 60 }]}
-              placeholder="The author's personal analytical perspective..."
+              placeholder="The author's theoretical perspective, argument, or synthesis..."
               placeholderTextColor={colors.textMuted}
               multiline
               numberOfLines={3}
@@ -261,11 +274,11 @@ export default function ArticleSubmitScreen() {
           <View style={styles.formSection}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Sources & References</Text>
             <Text style={[styles.sectionDesc, { color: colors.textSecondary }]}>
-              Every submitted Heritage Voices article must cite at least one verifiable reference.
+              Every submitted Heritage Voices article must cite at least one source / reference citation.
             </Text>
 
             {/* List of added sources */}
-            {sources.map((s, idx) => (
+            {sources.map((s: HeritageSource) => (
               <View key={s.id} style={[styles.sourceItem, { borderColor: colors.cardBorder, backgroundColor: colors.card }]}>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.sourceItemTitle, { color: colors.text }]}>{s.title}</Text>
@@ -281,7 +294,7 @@ export default function ArticleSubmitScreen() {
 
             {/* Add Source Subform */}
             <View style={[styles.addSourceBox, { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder }]}>
-              <Text style={[styles.fieldLabel, { color: colors.text }]}>Add New Reference</Text>
+              <Text style={[styles.fieldLabel, { color: colors.text }]}>Add Source Citation</Text>
               <TextInput
                 style={[styles.input, { borderColor: colors.cardBorder, color: colors.text }]}
                 placeholder="Publication Title or Archival Document *"
@@ -312,7 +325,7 @@ export default function ArticleSubmitScreen() {
               />
 
               <Pressable style={[styles.secondaryBtn, { borderColor: colors.primary }]} onPress={handleAddSource}>
-                <Text style={[styles.secondaryBtnText, { color: colors.primary }]}>+ Add to Sources List</Text>
+                <Text style={[styles.secondaryBtnText, { color: colors.primary }]}>+ Add Source / Reference</Text>
               </Pressable>
             </View>
 
@@ -366,7 +379,7 @@ export default function ArticleSubmitScreen() {
               <Text style={{ fontSize: 13, fontWeight: '800', marginTop: 12, color: colors.text }}>
                 Sources ({sources.length}):
               </Text>
-              {sources.map((s) => (
+              {sources.map((s: HeritageSource) => (
                 <Text key={s.id} style={{ fontSize: 12, color: colors.textSecondary }}>• {s.title} ({s.sourceType})</Text>
               ))}
             </View>
@@ -388,10 +401,10 @@ export default function ArticleSubmitScreen() {
             <Text style={styles.confirmIcon}>🏛️</Text>
             <Text style={[styles.confirmTitle, { color: colors.text }]}>Submitted for Review</Text>
             <Text style={[styles.confirmSubtitle, { color: colors.textSecondary }]}>
-              Your article has been submitted to the Akhyana review process.
+              Your article has been submitted to the editorial moderation queue.
             </Text>
             <Text style={[styles.confirmNote, { color: colors.textMuted }]}>
-              The article will enter <Text style={{ fontWeight: '700' }}>pending_review</Text> and will not appear publicly until it passes editorial verification.
+              The article is set to <Text style={{ fontWeight: '700' }}>pending_review</Text> and will not appear publicly until reviewed by moderators.
             </Text>
             <Pressable
               style={[styles.primaryBtn, { backgroundColor: colors.primary, marginTop: 24, width: '100%' }]}

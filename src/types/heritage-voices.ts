@@ -1,6 +1,7 @@
-export type ExpertVerificationStatus = 'pending' | 'verified' | 'rejected';
+export type ExpertVerificationStatus = 'pending' | 'verified' | 'rejected' | 'unverified';
 
 export type ArticleReviewStatus =
+  | 'draft'
   | 'pending_review'
   | 'content_reviewed'
   | 'published'
@@ -44,6 +45,7 @@ export interface HeritageExpert {
   fieldOfExpertise?: string;
   bio?: string;
   verificationStatus: ExpertVerificationStatus;
+  isDemo?: boolean;
   credentials?: HeritageCredential[];
   articleIds: string[];
 }
@@ -68,15 +70,17 @@ export interface HeritageArticle {
 }
 
 export type HeritageReportReason =
+  | 'inaccurate_citation'
+  | 'plagiarism'
+  | 'misrepresented_evidence'
   | 'misinformation'
   | 'unsupported_claim'
   | 'misleading_interpretation'
-  | 'hate_or_discrimination'
+  | 'hate_speech'
   | 'religious_sensitivity'
   | 'political_propaganda'
   | 'graphic_content'
   | 'offensive_content'
-  | 'plagiarism'
   | 'other';
 
 export interface HeritageReport {

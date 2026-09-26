@@ -7,39 +7,49 @@ import { Colors } from '@/constants/theme';
 
 interface Props {
   expert: HeritageExpert;
-  onPress?: () => void;
-  showCredentialsButton?: boolean;
+  showBio?: boolean;
 }
 
-export function HeritageAuthorBadge({ expert, onPress, showCredentialsButton = false }: Props) {
-  const colors = Colors.light;
+export function HeritageAuthorBadge({ expert, showBio = false }: Props) {
   const router = useRouter();
-
-  const handlePress = () => {
-    if (onPress) {
-      onPress();
-    } else {
-      router.push(`/heritage-voices/author/${expert.id}`);
-    }
-  };
+  const colors = Colors.light;
 
   return (
-    <Pressable style={styles.container} onPress={handlePress}>
-      <View style={[styles.avatar, { backgroundColor: colors.sageLight }]}>
-        <Text style={[styles.avatarText, { color: colors.oliveDark }]}>
-          {expert.name.replace(/^(Dr\.|Prof\.)\s*/, '').charAt(0)}
+    <Pressable
+      style={({ pressed }) => [
+        styles.container,
+        { backgroundColor: colors.card, borderColor: colors.cardBorder },
+        pressed && { opacity: 0.8 },
+      ]}
+      onPress={() => router.push(`/heritage-voices/author/${expert.id}`)}>
+      <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+        <Text style={styles.avatarText}>
+          {expert.name
+            .split(' ')
+            .map((n) => n[0])
+            .slice(0, 2)
+            .join('')}
         </Text>
       </View>
-      <View style={styles.textContainer}>
-        <Text style={[styles.name, { color: colors.text }]}>{expert.name}</Text>
+
+      <View style={styles.details}>
+        <View style={styles.nameRow}>
+          <Text style={[styles.name, { color: colors.text }]}>{expert.name}</Text>
+          <HeritageVerificationBadge status={expert.verificationStatus} isDemo={expert.isDemo} />
+        </View>
+
         {expert.designation && (
-          <Text style={[styles.designation, { color: colors.textSecondary }]} numberOfLines={1}>
-            {expert.designation} {expert.fieldOfExpertise ? `· ${expert.fieldOfExpertise}` : ''}
+          <Text style={[styles.designation, { color: colors.textSecondary }]}>
+            {expert.designation}
+            {expert.institution ? ` · ${expert.institution}` : ''}
           </Text>
         )}
-        <View style={styles.badgeRow}>
-          <HeritageVerificationBadge status={expert.verificationStatus} />
-        </View>
+
+        {showBio && expert.bio && (
+          <Text style={[styles.bio, { color: colors.textMuted }]} numberOfLines={2}>
+            {expert.bio}
+          </Text>
+        )}
       </View>
     </Pressable>
   );
@@ -49,31 +59,41 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 10,
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    fontSize: 18,
+    color: '#FFFFFF',
     fontWeight: '800',
+    fontSize: 14,
   },
-  textContainer: {
+  details: {
     flex: 1,
     gap: 2,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   name: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '800',
   },
   designation: {
-    fontSize: 12,
+    fontSize: 11,
   },
-  badgeRow: {
+  bio: {
+    fontSize: 11,
     marginTop: 2,
   },
 });

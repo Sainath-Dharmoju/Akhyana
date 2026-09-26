@@ -7,21 +7,21 @@ import { HeritageVerificationBadge } from '@/components/heritage-voices/Heritage
 import { HeritageArticleCard } from '@/components/heritage-voices/HeritageArticleCard';
 import { Colors } from '@/constants/theme';
 
-export default function AuthorProfileScreen() {
+export default function HeritageAuthorScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const colors = Colors.light;
 
-  const expert = id ? getHeritageExpertById(id) : undefined;
-  const articles = id ? getArticlesByAuthor(id) : [];
+  const expert = getHeritageExpertById(id);
+  const articles = expert ? getArticlesByAuthor(expert.id) : [];
 
   if (!expert) {
     return (
-      <View style={[styles.centerContainer, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-        <Text style={[styles.notFoundTitle, { color: colors.text }]}>Author Not Found</Text>
-        <Pressable onPress={() => router.back()} style={styles.backLink}>
-          <Text style={{ color: colors.primary, fontWeight: '700' }}>← Go back</Text>
+      <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + 20 }]}>
+        <Text style={[styles.notFound, { color: colors.text }]}>Expert profile not found.</Text>
+        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Text style={{ color: colors.oliveDark, fontWeight: '700' }}>← Go Back</Text>
         </Pressable>
       </View>
     );
@@ -32,37 +32,52 @@ export default function AuthorProfileScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 60 },
+          { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 },
         ]}
         showsVerticalScrollIndicator={false}>
-        {/* Navigation */}
+        {/* Back Button */}
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Text style={[styles.backBtnText, { color: colors.oliveDark }]}>← Back</Text>
         </Pressable>
 
-        {/* Profile Card */}
+        {/* Profile Header */}
         <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <View style={[styles.avatar, { backgroundColor: colors.sageLight }]}>
-            <Text style={[styles.avatarText, { color: colors.oliveDark }]}>
-              {expert.name.replace(/^(Dr\.|Prof\.)\s*/, '').charAt(0)}
+          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
+            <Text style={styles.avatarText}>
+              {expert.name
+                .split(' ')
+                .map((n) => n[0])
+                .slice(0, 2)
+                .join('')}
             </Text>
           </View>
-          <Text style={[styles.name, { color: colors.text }]}>{expert.name}</Text>
-          {expert.designation && <Text style={[styles.designation, { color: colors.textSecondary }]}>{expert.designation}</Text>}
-          {expert.institution && <Text style={[styles.institution, { color: colors.textMuted }]}>{expert.institution}</Text>}
 
-          <View style={styles.badgeRow}>
-            <HeritageVerificationBadge status={expert.verificationStatus} showExplanation />
+          <Text style={[styles.name, { color: colors.text }]}>{expert.name}</Text>
+          {expert.designation && (
+            <Text style={[styles.designation, { color: colors.textSecondary }]}>
+              {expert.designation}
+            </Text>
+          )}
+          {expert.institution && (
+            <Text style={[styles.institution, { color: colors.textMuted }]}>
+              {expert.institution}
+            </Text>
+          )}
+
+          <View style={{ marginVertical: 8 }}>
+            <HeritageVerificationBadge status={expert.verificationStatus} isDemo={expert.isDemo} showExplanation />
           </View>
 
-          {expert.bio && <Text style={[styles.bio, { color: colors.text }]}>{expert.bio}</Text>}
+          {expert.bio && (
+            <Text style={[styles.bio, { color: colors.textSecondary }]}>{expert.bio}</Text>
+          )}
         </View>
 
         {/* Credentials Section */}
         {expert.credentials && expert.credentials.length > 0 && (
           <View style={styles.section}>
-            <Text style={[styles.sectionHeading, { color: colors.text }]}>Verified Credentials</Text>
-            <View style={styles.credList}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Verified Qualifications & Fieldwork</Text>
+            <View style={styles.credentialsList}>
               {expert.credentials.map((cred) => (
                 <View
                   key={cred.id}
@@ -70,12 +85,12 @@ export default function AuthorProfileScreen() {
                   <Text style={[styles.credTitle, { color: colors.text }]}>{cred.title}</Text>
                   {cred.institution && (
                     <Text style={[styles.credInst, { color: colors.textSecondary }]}>
-                      {cred.institution} {cred.year ? `(${cred.year})` : ''}
+                      {cred.institution} {cred.year ? `· ${cred.year}` : ''}
                     </Text>
                   )}
                   {cred.verificationNote && (
-                    <Text style={[styles.credNote, { color: colors.oliveDark }]}>
-                      ✓ {cred.verificationNote}
+                    <Text style={[styles.credNote, { color: colors.textMuted }]}>
+                      {cred.verificationNote}
                     </Text>
                   )}
                 </View>
@@ -84,16 +99,16 @@ export default function AuthorProfileScreen() {
           </View>
         )}
 
-        {/* Articles Section */}
+        {/* Published Research Section */}
         <View style={styles.section}>
-          <Text style={[styles.sectionHeading, { color: colors.text }]}>
-            Articles by {expert.name} ({articles.length})
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Contributions by {expert.name} ({articles.length})
           </Text>
-          {articles.length > 0 ? (
-            articles.map((art) => <HeritageArticleCard key={art.id} article={art} />)
-          ) : (
-            <Text style={{ color: colors.textMuted, fontStyle: 'italic' }}>No articles published yet.</Text>
-          )}
+          <View style={styles.articlesList}>
+            {articles.map((art) => (
+              <HeritageArticleCard key={art.id} article={art} />
+            ))}
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -107,48 +122,41 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
   },
-  centerContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  notFoundTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  backLink: {
-    marginTop: 10,
-  },
   backBtn: {
     paddingVertical: 6,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   backBtnText: {
     fontSize: 14,
     fontWeight: '700',
   },
+  notFound: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginVertical: 40,
+  },
   profileCard: {
-    borderRadius: 14,
+    borderRadius: 12,
     borderWidth: 1,
-    padding: 20,
+    padding: 18,
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   avatar: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 6,
+    marginBottom: 10,
   },
   avatarText: {
-    fontSize: 28,
+    color: '#FFFFFF',
     fontWeight: '800',
+    fontSize: 22,
   },
   name: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
     textAlign: 'center',
   },
@@ -156,39 +164,39 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
+    marginTop: 2,
   },
   institution: {
     fontSize: 12,
     textAlign: 'center',
-  },
-  badgeRow: {
-    marginVertical: 6,
+    marginTop: 1,
   },
   bio: {
     fontSize: 13,
     lineHeight: 18,
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: 6,
   },
   section: {
     marginBottom: 20,
+    gap: 8,
   },
-  sectionHeading: {
-    fontSize: 17,
+  sectionTitle: {
+    fontSize: 16,
     fontWeight: '800',
-    marginBottom: 10,
+    marginBottom: 4,
   },
-  credList: {
+  credentialsList: {
     gap: 8,
   },
   credCard: {
     borderRadius: 8,
     borderWidth: 1,
     padding: 12,
-    gap: 4,
+    gap: 2,
   },
   credTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
   credInst: {
@@ -196,6 +204,10 @@ const styles = StyleSheet.create({
   },
   credNote: {
     fontSize: 11,
-    marginTop: 2,
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  articlesList: {
+    gap: 12,
   },
 });
