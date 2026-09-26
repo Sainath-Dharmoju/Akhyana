@@ -7,6 +7,14 @@ export type LudoPhase =
   | 'discovery'
   | 'complete';
 
+/**
+ * Quiz-cycle phase for the year-based Ludo quiz.
+ * initial: first pass over the selected year's questions
+ * retry: only previously-incorrect questions are eligible
+ * year_complete: all questions used and all incorrect ones cleared
+ */
+export type QuizPhase = 'initial' | 'retry' | 'year_complete';
+
 export interface LudoPlayerConfig {
   seat: LudoSeat;
   name: string;
