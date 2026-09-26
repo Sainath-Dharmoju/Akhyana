@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { GestureResponderEvent, PanResponder, StyleSheet, View } from 'react-native';
+import { GestureResponderEvent, LayoutChangeEvent, PanResponder, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { BorderRadius } from '@/constants/theme';
@@ -31,51 +31,67 @@ export function ChronoSearchWordGrid({
   const theme = useTheme();
   const size = grid.length;
   const boardRef = useRef<View>(null);
-  const originRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
+
+  // Dynamic layout measurements of the actual interactive grid
+  const gridLayoutRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 });
+  const gridScreenOriginRef = useRef<{ left: number; top: number }>({ left: 0, top: 0 });
+
   const startRef = useRef<GridCell | null>(null);
-  const directionRef = useRef<GridCell | null>(null);
   const pathRef = useRef<GridCell[]>([]);
   const [boardWidth, setBoardWidth] = useState(0);
   const cellSize = boardWidth > 0 ? boardWidth / size : 0;
   const selectedKeys = new Set(selection.map(cellKey));
 
-  const measureBoard = useCallback(() => {
-    boardRef.current?.measureInWindow((x, y, width, height) => {
-      originRef.current = { x, y, width, height };
-      if (width > 0) setBoardWidth(width);
-    });
+  const handleLayout = useCallback((event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    gridLayoutRef.current = { width, height };
+    if (width > 0) {
+      setBoardWidth(width);
+    }
   }, []);
 
-  const pageToCell = useCallback(
+  // Single consistent coordinate converter for touch start, move, and end
+  const getCellFromTouchPosition = useCallback(
     (pageX: number, pageY: number): GridCell | null => {
-      const { x, y, width, height } = originRef.current;
-      if (width <= 0 || height <= 0) return null;
-      const colSize = width / size;
-      const rowSize = height / size;
-      
-      let col = Math.floor((pageX - x) / colSize);
-      let row = Math.floor((pageY - y) / rowSize);
-      
-      // Clamp to grid boundaries so dragging outside doesn't fail but stops at the edge
+      const { left, top } = gridScreenOriginRef.current;
+      const { width, height } = gridLayoutRef.current;
+
+      if (width <= 0 || height <= 0) {
+        return null;
+      }
+
+      // Grid-local coordinates
+      const localX = pageX - left;
+      const localY = pageY - top;
+
+      const cellWidth = width / size;
+      const cellHeight = height / size;
+
+      let col = Math.floor(localX / cellWidth);
+      let row = Math.floor(localY / cellHeight);
+
+      // Clamp to grid boundaries so dragging near edges tracks accurately
       col = Math.max(0, Math.min(size - 1, col));
       row = Math.max(0, Math.min(size - 1, row));
-      
+
       return { row, col };
     },
     [size],
   );
 
-  const applyPointer = useCallback(
+  const applyTouchMove = useCallback(
     (pageX: number, pageY: number) => {
-      const cell = pageToCell(pageX, pageY);
       const start = startRef.current;
-      if (!cell || !start) return;
-      const result = selectionPathFromDrag(start, cell, directionRef.current, size);
-      if (result.direction) directionRef.current = result.direction;
+      if (!start) return;
+
+      const currentCell = getCellFromTouchPosition(pageX, pageY);
+      if (!currentCell) return;
+
+      const result = selectionPathFromDrag(start, currentCell, pathRef.current, size);
       pathRef.current = result.path;
       onSelectionChange(result.path);
     },
-    [onSelectionChange, pageToCell, size],
+    [getCellFromTouchPosition, onSelectionChange, size],
   );
 
   const panResponder = useMemo(
@@ -83,40 +99,39 @@ export function ChronoSearchWordGrid({
       PanResponder.create({
         onStartShouldSetPanResponder: () => interactionEnabled,
         onStartShouldSetPanResponderCapture: () => interactionEnabled,
-        onMoveShouldSetPanResponder: () => false,
-        onMoveShouldSetPanResponderCapture: () => false,
+        onMoveShouldSetPanResponder: () => interactionEnabled,
+        onMoveShouldSetPanResponderCapture: () => interactionEnabled,
         onPanResponderTerminationRequest: () => false,
         onShouldBlockNativeResponder: () => true,
+
         onPanResponderGrant: (event: GestureResponderEvent) => {
           if (!interactionEnabled) return;
           const { pageX, pageY, locationX, locationY } = event.nativeEvent;
           onDragActiveChange?.(true);
-          boardRef.current?.measureInWindow((x, y, width, height) => {
-            originRef.current = { x, y, width, height };
-            if (width > 0) setBoardWidth(width);
-            const cell =
-              pageToCell(pageX, pageY) ??
-              (width > 0
-                ? {
-                    row: Math.min(size - 1, Math.max(0, Math.floor(locationY / (height / size)))),
-                    col: Math.min(size - 1, Math.max(0, Math.floor(locationX / (width / size)))),
-                  }
-                : null);
-            if (!cell) return;
-            startRef.current = cell;
-            directionRef.current = null;
-            pathRef.current = [cell];
-            onSelectionChange([cell]);
-          });
+
+          // Calculate exact screen position of rendered grid at this moment
+          // pageX - locationX and pageY - locationY inherently accounts for any scroll, headers, or status bar
+          gridScreenOriginRef.current = {
+            left: pageX - locationX,
+            top: pageY - locationY,
+          };
+
+          const cell = getCellFromTouchPosition(pageX, pageY);
+          if (!cell) return;
+
+          startRef.current = cell;
+          pathRef.current = [cell];
+          onSelectionChange([cell]);
         },
+
         onPanResponderMove: (event: GestureResponderEvent) => {
-          applyPointer(event.nativeEvent.pageX, event.nativeEvent.pageY);
+          applyTouchMove(event.nativeEvent.pageX, event.nativeEvent.pageY);
         },
+
         onPanResponderRelease: () => {
           onDragActiveChange?.(false);
           const path = pathRef.current;
           startRef.current = null;
-          directionRef.current = null;
           pathRef.current = [];
           if (path.length >= 2) {
             onSelectionComplete(path);
@@ -124,22 +139,21 @@ export function ChronoSearchWordGrid({
             onSelectionChange([]);
           }
         },
+
         onPanResponderTerminate: () => {
           onDragActiveChange?.(false);
           startRef.current = null;
-          directionRef.current = null;
           pathRef.current = [];
           onSelectionChange([]);
         },
       }),
     [
-      applyPointer,
+      applyTouchMove,
+      getCellFromTouchPosition,
       interactionEnabled,
-      measureBoard,
       onDragActiveChange,
       onSelectionChange,
       onSelectionComplete,
-      pageToCell,
     ],
   );
 
@@ -148,7 +162,7 @@ export function ChronoSearchWordGrid({
       ref={boardRef}
       collapsable={false}
       pointerEvents="box-only"
-      onLayout={measureBoard}
+      onLayout={handleLayout}
       style={[
         styles.board,
         {
@@ -163,20 +177,20 @@ export function ChronoSearchWordGrid({
             const key = `${rowIndex}:${colIndex}`;
             const isFound = foundCellKeys.has(key);
             const isSelected = selectedKeys.has(key);
-            
-            let backgroundColor: string = 'transparent';
-            let color: string = theme.textSecondary;
+
+            let backgroundColor = 'transparent';
+            let color = theme.textSecondary;
             let borderRadius = 0;
             let opacity = 1;
 
             if (isFound) {
-              backgroundColor = '#50613E'; // Deep forest olive
+              backgroundColor = '#50613E'; // Forest olive
               color = '#FFFFFF';
-              borderRadius = 12;
+              borderRadius = 10;
             } else if (isSelected) {
-              backgroundColor = invalidSelection ? theme.accent : '#7D7246'; // Chola / warm green
+              backgroundColor = invalidSelection ? theme.accent : '#7D7246'; // Warm ochre
               color = '#FFFFFF';
-              borderRadius = 12;
+              borderRadius = 10;
               opacity = 0.9;
             }
 
@@ -191,7 +205,7 @@ export function ChronoSearchWordGrid({
                     height: cellSize || undefined,
                     backgroundColor,
                     borderRadius,
-                    opacity
+                    opacity,
                   },
                 ]}>
                 <ThemedText type="smallBold" style={[styles.letter, { color }]}>
@@ -200,7 +214,6 @@ export function ChronoSearchWordGrid({
               </View>
             );
           })}
-
         </View>
       ))}
     </View>
@@ -214,7 +227,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: BorderRadius.xl,
     padding: 4,
-    backgroundColor: '#EBEBE3', // very soft cream
+    backgroundColor: '#EBEBE3',
     // @ts-ignore
     userSelect: 'none',
   },

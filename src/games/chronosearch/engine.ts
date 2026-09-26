@@ -62,26 +62,41 @@ export function assembleGrid(puzzle: ChronoSearchPuzzleDef): string[][] {
   );
 }
 
-export function getStraightPath(start: GridCell, end: GridCell): GridCell[] | null {
-  const rowDiff = end.row - start.row;
-  const colDiff = end.col - start.col;
-  const absRow = Math.abs(rowDiff);
-  const absCol = Math.abs(colDiff);
+export function isValidStraightLine(start: GridCell, end: GridCell): boolean {
+  const rowDelta = end.row - start.row;
+  const colDelta = end.col - start.col;
+  if (rowDelta === 0 && colDelta === 0) return true;
+  const isHorizontal = rowDelta === 0 && colDelta !== 0;
+  const isVertical = rowDelta !== 0 && colDelta === 0;
+  const isDiagonal = Math.abs(rowDelta) === Math.abs(colDelta) && rowDelta !== 0;
+  return isHorizontal || isVertical || isDiagonal;
+}
 
-  if (absRow !== 0 && absCol !== 0 && absRow !== absCol) {
+export function getStraightPath(start: GridCell, end: GridCell): GridCell[] | null {
+  const rowDelta = end.row - start.row;
+  const colDelta = end.col - start.col;
+
+  if (!isValidStraightLine(start, end)) {
     return null;
   }
 
-  const steps = Math.max(absRow, absCol);
+  const steps = Math.max(Math.abs(rowDelta), Math.abs(colDelta));
   if (steps === 0) return [start];
 
-  const rowStep = rowDiff === 0 ? 0 : rowDiff / absRow;
-  const colStep = colDiff === 0 ? 0 : colDiff / absCol;
+  const rowStep = Math.sign(rowDelta);
+  const colStep = Math.sign(colDelta);
 
-  return Array.from({ length: steps + 1 }, (_, index) => ({
-    row: start.row + rowStep * index,
-    col: start.col + colStep * index,
-  }));
+  const path: GridCell[] = [];
+  let currentRow = start.row;
+  let currentCol = start.col;
+
+  for (let i = 0; i <= steps; i++) {
+    path.push({ row: currentRow, col: currentCol });
+    currentRow += rowStep;
+    currentCol += colStep;
+  }
+
+  return path;
 }
 
 export function lettersFromPath(grid: string[][], path: GridCell[]): string {
@@ -132,49 +147,35 @@ export function evaluateSelection(
   return { status: 'found', word: match };
 }
 
-export function inferDirection(start: GridCell, next: GridCell): GridCell | null {
-  const row = Math.sign(next.row - start.row);
-  const col = Math.sign(next.col - start.col);
-  if (row === 0 && col === 0) return null;
-  return { row, col };
-}
-
-export function projectOntoDirection(
-  start: GridCell,
-  target: GridCell,
-  direction: GridCell,
-  gridSize: number,
-): GridCell {
-  let steps: number;
-  if (direction.row !== 0 && direction.col !== 0) {
-    steps = Math.max(Math.abs(target.row - start.row), Math.abs(target.col - start.col));
-  } else if (direction.row !== 0) {
-    steps = Math.abs(target.row - start.row);
-  } else {
-    steps = Math.abs(target.col - start.col);
-  }
-
-  while (steps > 0) {
-    const row = start.row + direction.row * steps;
-    const col = start.col + direction.col * steps;
-    if (row >= 0 && col >= 0 && row < gridSize && col < gridSize) {
-      return { row, col };
-    }
-    steps -= 1;
-  }
-
-  return start;
-}
-
 export function selectionPathFromDrag(
   start: GridCell,
   current: GridCell,
-  lockedDirection: GridCell | null,
-  gridSize: number,
+  previousPath: GridCell[] | null,
+  _gridSize: number,
 ): { path: GridCell[]; direction: GridCell | null } {
-  const direction = lockedDirection ?? inferDirection(start, current);
-  if (!direction) return { path: [start], direction: null };
-  const end = projectOntoDirection(start, current, direction, gridSize);
-  const path = getStraightPath(start, end) ?? [start];
-  return { path, direction };
+  if (isValidStraightLine(start, current)) {
+    const path = getStraightPath(start, current);
+    if (path) {
+      const rowDelta = Math.sign(current.row - start.row);
+      const colDelta = Math.sign(current.col - start.col);
+      return {
+        path,
+        direction: rowDelta !== 0 || colDelta !== 0 ? { row: rowDelta, col: colDelta } : null,
+      };
+    }
+  }
+
+  // If the drag point drifts into an irregular or non-straight cell, retain the last valid straight path
+  if (previousPath && previousPath.length > 0) {
+    const lastCell = previousPath[previousPath.length - 1];
+    return {
+      path: previousPath,
+      direction: {
+        row: Math.sign(lastCell.row - start.row),
+        col: Math.sign(lastCell.col - start.col),
+      },
+    };
+  }
+
+  return { path: [start], direction: null };
 }

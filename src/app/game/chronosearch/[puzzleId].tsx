@@ -31,6 +31,10 @@ function ChronoSearchPlay({
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const era = getEraForPuzzle(puzzle.id);
+  const contextTitle = puzzle.year
+    ? `${puzzle.decade}s • ${puzzle.year}`
+    : era?.title ?? 'ChronoSearch';
+
   const game = useChronoSearchGame(puzzle);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -50,14 +54,14 @@ function ChronoSearchPlay({
         <View style={styles.center}>
           <View style={styles.section}>
             <Button
-              title="← ERAS"
+              title="← CHRONOSEARCH"
               size="sm"
               variant="text"
               onPress={() => router.replace('/game/chronosearch')}
             />
             {game.phase === 'complete' ? (
               <ChronoSearchCompletionCard
-                eraTitle={era?.title ?? 'ChronoSearch'}
+                eraTitle={contextTitle}
                 puzzleTitle={puzzle.title}
                 wordCount={puzzle.words.length}
                 elapsedSeconds={game.elapsedSeconds}
@@ -68,7 +72,7 @@ function ChronoSearchPlay({
             ) : (
               <>
                 <ChronoSearchHud
-                  eraTitle={era?.title ?? 'ChronoSearch'}
+                  eraTitle={contextTitle}
                   puzzleTitle={puzzle.title}
                   score={game.score}
                   elapsedSeconds={game.elapsedSeconds}

@@ -15,6 +15,7 @@ export interface MiniChallenge {
 export interface ChronoSearchWordDef {
   id: string;
   word: string;
+  clue?: string;
   displayLabel: string;
   row: number;
   col: number;
@@ -25,13 +26,27 @@ export interface ChronoSearchWordDef {
   challenge?: MiniChallenge;
 }
 
+export type ChronoSearchWord = ChronoSearchWordDef;
+
 export interface ChronoSearchPuzzleDef {
   id: string;
-  eraId: string;
+  decade?: number;
+  year?: number;
+  eraId?: string;
   title: string;
+  description?: string;
   gridSize: number;
   fill: string;
   words: ChronoSearchWordDef[];
+}
+
+export type ChronoSearchPuzzle = ChronoSearchPuzzleDef;
+
+export interface ChronoSearchDecade {
+  decade: number;
+  displayLabel: string;
+  summary: string;
+  puzzles: ChronoSearchPuzzleDef[];
 }
 
 export interface ChronoSearchEra {

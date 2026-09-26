@@ -1,20 +1,31 @@
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AnnotationTag } from '@/components/annotation-tag';
 import { Button } from '@/components/button';
-import { ChronoSearchEraCard } from '@/components/chronosearch/era-card';
+import { EditorialCard } from '@/components/editorial-card';
 import { HairlineDivider } from '@/components/hairline-divider';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
-import { getChronoSearchEras } from '@/data/chronosearch';
+import { BorderRadius, MaxContentWidth, Spacing } from '@/constants/theme';
+import {
+  getChronoSearchDecades,
+  PRESERVED_ERA_PUZZLES,
+} from '@/data/chronosearch';
+import { useTheme } from '@/hooks/use-theme';
 
-export default function ChronoSearchEraScreen() {
+export default function ChronoSearchScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const eras = getChronoSearchEras();
+  const theme = useTheme();
+
+  const decades = getChronoSearchDecades();
+  const [selectedDecade, setSelectedDecade] = useState<number>(decades[0]?.decade ?? 1940);
+
+  const activeDecadeGroup = decades.find((d) => d.decade === selectedDecade) ?? decades[0];
+  const puzzlesForDecade = activeDecadeGroup ? activeDecadeGroup.puzzles : [];
 
   return (
     <ThemedView style={styles.screen}>
@@ -28,24 +39,122 @@ export default function ChronoSearchEraScreen() {
         ]}
         showsVerticalScrollIndicator={false}>
         <View style={styles.center}>
+          {/* Header */}
           <View style={styles.section}>
             <Button title="← BACK TO GAMES" size="sm" variant="text" onPress={() => router.back()} />
             <ThemedText type="heroDisplay" style={styles.title}>
               CHRONOSEARCH
             </ThemedText>
             <ThemedText type="editorialLead" themeColor="textSecondary">
-              Hunt Through History. Choose an era, find hidden words, and read the evidence behind each discovery.
+              Hunt through history. Explore word search puzzles organized by decade and exact year to uncover authentic primary evidence.
             </ThemedText>
           </View>
+
           <HairlineDivider verticalMargin="md" />
-          <View style={styles.list}>
-            {eras.map((era) => (
-              <ChronoSearchEraCard
-                key={era.id}
-                era={era}
-                onPress={() => router.push(`/game/chronosearch/${era.puzzleId}`)}
-              />
-            ))}
+
+          {/* Decade Selector */}
+          <View style={styles.section}>
+            <ThemedText type="annotation" themeColor="textMuted">
+              SELECT DECADE
+            </ThemedText>
+            <View style={styles.decadeRow}>
+              {decades.map((d) => {
+                const isSelected = d.decade === selectedDecade;
+                return (
+                  <Pressable
+                    key={d.decade}
+                    onPress={() => setSelectedDecade(d.decade)}
+                    style={[
+                      styles.decadeChip,
+                      {
+                        backgroundColor: isSelected ? theme.accent : theme.card,
+                        borderColor: isSelected ? theme.accent : theme.cardBorder,
+                      },
+                    ]}>
+                    <ThemedText
+                      type="smallBold"
+                      style={{ color: isSelected ? '#FFFFFF' : theme.text }}>
+                      {d.displayLabel}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {activeDecadeGroup ? (
+              <ThemedText type="caption" themeColor="textSecondary" style={styles.decadeSummary}>
+                {activeDecadeGroup.summary}
+              </ThemedText>
+            ) : null}
+          </View>
+
+          {/* Year & Puzzle Cards */}
+          <View style={[styles.section, { marginTop: Spacing.two }]}>
+            <ThemedText type="annotation" themeColor="textMuted">
+              PUZZLES BY YEAR IN THE {activeDecadeGroup?.displayLabel}
+            </ThemedText>
+            <View style={styles.list}>
+              {puzzlesForDecade.map((puzzle) => (
+                <EditorialCard
+                  key={puzzle.id}
+                  variant="default"
+                  onPress={() => router.push(`/game/chronosearch/${puzzle.id}`)}>
+                  <View style={styles.cardHeaderRow}>
+                    <AnnotationTag
+                      label={puzzle.year ? `YEAR ${puzzle.year}` : `${activeDecadeGroup.displayLabel}`}
+                      variant="highlight"
+                    />
+                    <ThemedText type="annotation" themeColor="textMuted">
+                      {puzzle.words.length} HISTORICAL WORDS
+                    </ThemedText>
+                  </View>
+                  <ThemedText type="cardTitle" style={styles.cardTitle}>
+                    {puzzle.title}
+                  </ThemedText>
+                  {puzzle.description ? (
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {puzzle.description}
+                    </ThemedText>
+                  ) : null}
+                  <ThemedText type="smallBold" style={[styles.cta, { color: theme.accent }]}>
+                    Play {puzzle.year ? `${puzzle.year} Puzzle` : 'Puzzle'} →
+                  </ThemedText>
+                </EditorialCard>
+              ))}
+            </View>
+          </View>
+
+          <HairlineDivider verticalMargin="lg" />
+
+          {/* Preserved Ancient/Classical Era Archive */}
+          <View style={styles.section}>
+            <ThemedText type="annotation" themeColor="textMuted">
+              PRESERVED HISTORICAL ERA ARCHIVE
+            </ThemedText>
+            <ThemedText type="caption" themeColor="textMuted">
+              Ancient and classical eras preserved without fabricated year metadata.
+            </ThemedText>
+            <View style={styles.list}>
+              {PRESERVED_ERA_PUZZLES.map((puzzle) => (
+                <EditorialCard
+                  key={puzzle.id}
+                  variant="subtle"
+                  onPress={() => router.push(`/game/chronosearch/${puzzle.id}`)}>
+                  <View style={styles.cardHeaderRow}>
+                    <AnnotationTag label="ANCIENT / CLASSICAL" variant="neutral" />
+                    <ThemedText type="annotation" themeColor="textMuted">
+                      {puzzle.words.length} WORDS
+                    </ThemedText>
+                  </View>
+                  <ThemedText type="smallBold" style={styles.cardTitle}>
+                    {puzzle.title}
+                  </ThemedText>
+                  <ThemedText type="smallBold" style={[styles.cta, { color: theme.textSecondary }]}>
+                    Play Era Puzzle →
+                  </ThemedText>
+                </EditorialCard>
+              ))}
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -71,8 +180,35 @@ const styles = StyleSheet.create({
   title: {
     letterSpacing: -1,
   },
-  list: {
+  decadeRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    marginTop: Spacing.one,
+  },
+  decadeChip: {
     paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.two,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+  },
+  decadeSummary: {
+    marginTop: Spacing.one,
+    fontStyle: 'italic',
+  },
+  list: {
     gap: Spacing.three,
+    marginTop: Spacing.two,
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.two,
+  },
+  cardTitle: {
+    marginBottom: Spacing.one,
+  },
+  cta: {
+    marginTop: Spacing.three,
   },
 });
