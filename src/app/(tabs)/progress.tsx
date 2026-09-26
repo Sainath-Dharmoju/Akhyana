@@ -75,7 +75,7 @@ export default function ProgressScreen() {
 
           <View style={styles.titleSection}>
             <ThemedText type="heroDisplay" style={styles.pageTitle}>
-              YOUR{\n}MASTERY.
+                            {"YOUR\nMASTERY."}
             </ThemedText>
             <ThemedText type="editorialLead" themeColor="textSecondary" style={styles.pageLead}>
               Play games, discover history, and build your knowledge profile.
