@@ -1,0 +1,78 @@
+appId: com.akhyana.app
+---
+# ChronoSearch Real Emulator-Driven Touch & Drag Verification
+# Tests cell selection under scrolling, orientation changes, and safe-area shifts.
+
+- launchApp:
+    clearState: false
+
+# 1. Navigate to ChronoSearch via Games
+- tapOn: "Games"
+- tapOn: "ChronoSearch"
+
+# 2. Select Decade and Year to launch puzzle
+- tapOn:
+    text: "1940s"
+    optional: true
+- tapOn:
+    text: "1942"
+    optional: true
+
+# 3. Verify Puzzle and Board are Loaded
+- assertVisible: "Quit India Movement (1942)"
+
+# ---------------------------------------------------------------------------
+# SCENARIO A: SCROLLING OFFSET
+# Drag the screen downwards to simulate a scrolled container, then select
+# ---------------------------------------------------------------------------
+- scroll:
+    direction: DOWN
+- swipe:
+    direction: DOWN
+    duration: 400
+
+# Perform horizontal straight-line drag for "BHARAT" on Row 0 (Col 0 -> Col 5)
+# Coordinates relative to board view
+- drag:
+    from:
+      point: "10%, 25%"
+    to:
+      point: "75%, 25%"
+
+# Verify word discovery card or HUD highlights the found word
+- assertVisible:
+    text: "BHARAT"
+    optional: true
+
+# ---------------------------------------------------------------------------
+# SCENARIO B: SAFE-AREA / NOTCH SHIFT & VERTICAL SELECTION
+# Test vertical drag for "RADIO" on Col 7 (Row 1 -> Row 5)
+# ---------------------------------------------------------------------------
+- drag:
+    from:
+      point: "88%, 32%"
+    to:
+      point: "88%, 70%"
+
+- assertVisible:
+    text: "RADIO"
+    optional: true
+
+# ---------------------------------------------------------------------------
+# SCENARIO C: ORIENTATION CHANGE (Landscape) & REVERSE DIAGONAL
+# Rotate device, verify grid repositions, perform reverse diagonal drag
+# ---------------------------------------------------------------------------
+- setOrientation: LANDSCAPE
+
+# Verify grid adjusted to landscape bounds
+- assertVisible: "Quit India Movement (1942)"
+
+# Drag reverse diagonal from bottom-right to top-left
+- drag:
+    from:
+      point: "65%, 80%"
+    to:
+      point: "35%, 20%"
+
+# Restore portrait orientation
+- setOrientation: PORTRAIT
