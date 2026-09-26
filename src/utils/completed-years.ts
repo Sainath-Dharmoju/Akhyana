@@ -35,6 +35,10 @@ export async function getCompletedYears(): Promise<number[]> {
   return [...memoryCompletedYears];
 }
 
+export function isYearCompleted(year: number): boolean {
+  return memoryCompletedYears.includes(year);
+}
+
 export async function addCompletedYear(year: number): Promise<number[]> {
   const current = await getCompletedYears();
   if (!current.includes(year)) {
@@ -51,4 +55,16 @@ export async function addCompletedYear(year: number): Promise<number[]> {
     return updated;
   }
   return current;
+}
+
+export function clearCompletedYears(): void {
+  memoryCompletedYears = [];
+  try {
+    const storage = getStorage();
+    if (storage) {
+      storage.removeItem(STORAGE_KEY);
+    }
+  } catch (e) {
+    console.warn('Failed to clear completed years from storage', e);
+  }
 }
