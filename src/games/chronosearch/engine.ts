@@ -12,6 +12,13 @@ const DIRECTION_DELTA: Record<WordDirection, GridCell> = {
   'diagonal-up': { row: -1, col: 1 },
 };
 
+export interface GridScreenBounds {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
 export function cellKey(cell: GridCell): string {
   return `${cell.row}:${cell.col}`;
 }
@@ -178,4 +185,35 @@ export function selectionPathFromDrag(
   }
 
   return { path: [start], direction: null };
+}
+
+/**
+ * Converts screen touch coordinates (pageX, pageY) into grid row/column
+ * based on actual rendered grid origin and dimensions on screen.
+ * Clamps coordinates to valid grid boundaries.
+ */
+export function getCellFromTouchPosition(
+  pageX: number,
+  pageY: number,
+  bounds: GridScreenBounds,
+  size: number,
+): GridCell | null {
+  if (bounds.width <= 0 || bounds.height <= 0 || size <= 0) {
+    return null;
+  }
+
+  const localX = pageX - bounds.left;
+  const localY = pageY - bounds.top;
+
+  const cellWidth = bounds.width / size;
+  const cellHeight = bounds.height / size;
+
+  let col = Math.floor(localX / cellWidth);
+  let row = Math.floor(localY / cellHeight);
+
+  // Clamp to grid boundaries so dragging near edges tracks accurately
+  col = Math.max(0, Math.min(size - 1, col));
+  row = Math.max(0, Math.min(size - 1, row));
+
+  return { row, col };
 }

@@ -3,7 +3,7 @@ import { GestureResponderEvent, LayoutChangeEvent, PanResponder, StyleSheet, Vie
 
 import { ThemedText } from '@/components/themed-text';
 import { BorderRadius } from '@/constants/theme';
-import { cellKey, selectionPathFromDrag } from '@/games/chronosearch/engine';
+import { cellKey, getCellFromTouchPosition, selectionPathFromDrag } from '@/games/chronosearch/engine';
 import { GridCell } from '@/games/chronosearch/types';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -51,30 +51,19 @@ export function ChronoSearchWordGrid({
   }, []);
 
   // Single consistent coordinate converter for touch start, move, and end
-  const getCellFromTouchPosition = useCallback(
+  const getCellFromTouch = useCallback(
     (pageX: number, pageY: number): GridCell | null => {
-      const { left, top } = gridScreenOriginRef.current;
-      const { width, height } = gridLayoutRef.current;
-
-      if (width <= 0 || height <= 0) {
-        return null;
-      }
-
-      // Grid-local coordinates
-      const localX = pageX - left;
-      const localY = pageY - top;
-
-      const cellWidth = width / size;
-      const cellHeight = height / size;
-
-      let col = Math.floor(localX / cellWidth);
-      let row = Math.floor(localY / cellHeight);
-
-      // Clamp to grid boundaries so dragging near edges tracks accurately
-      col = Math.max(0, Math.min(size - 1, col));
-      row = Math.max(0, Math.min(size - 1, row));
-
-      return { row, col };
+      return getCellFromTouchPosition(
+        pageX,
+        pageY,
+        {
+          left: gridScreenOriginRef.current.left,
+          top: gridScreenOriginRef.current.top,
+          width: gridLayoutRef.current.width,
+          height: gridLayoutRef.current.height,
+        },
+        size,
+      );
     },
     [size],
   );
@@ -84,14 +73,14 @@ export function ChronoSearchWordGrid({
       const start = startRef.current;
       if (!start) return;
 
-      const currentCell = getCellFromTouchPosition(pageX, pageY);
+      const currentCell = getCellFromTouch(pageX, pageY);
       if (!currentCell) return;
 
       const result = selectionPathFromDrag(start, currentCell, pathRef.current, size);
       pathRef.current = result.path;
       onSelectionChange(result.path);
     },
-    [getCellFromTouchPosition, onSelectionChange, size],
+    [getCellFromTouch, onSelectionChange, size],
   );
 
   const panResponder = useMemo(
@@ -116,7 +105,7 @@ export function ChronoSearchWordGrid({
             top: pageY - locationY,
           };
 
-          const cell = getCellFromTouchPosition(pageX, pageY);
+          const cell = getCellFromTouch(pageX, pageY);
           if (!cell) return;
 
           startRef.current = cell;
@@ -149,7 +138,7 @@ export function ChronoSearchWordGrid({
       }),
     [
       applyTouchMove,
-      getCellFromTouchPosition,
+      getCellFromTouch,
       interactionEnabled,
       onDragActiveChange,
       onSelectionChange,
