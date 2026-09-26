@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,6 +10,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BorderRadius, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { getCompletedYears } from '@/utils/completed-years';
 
 // Mock data for the current prototype architecture
 const MOCK_PROGRESS = {
@@ -51,6 +52,11 @@ export default function ProgressScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const data = MOCK_PROGRESS;
+  const [completedYearsList, setCompletedYearsList] = useState<number[]>([]);
+
+  useEffect(() => {
+    void getCompletedYears().then((years) => setCompletedYearsList(years));
+  }, []);
 
   return (
     <ThemedView style={styles.screen}>
@@ -69,7 +75,7 @@ export default function ProgressScreen() {
 
           <View style={styles.titleSection}>
             <ThemedText type="heroDisplay" style={styles.pageTitle}>
-              YOUR{'\n'}MASTERY.
+              YOUR{\n}MASTERY.
             </ThemedText>
             <ThemedText type="editorialLead" themeColor="textSecondary" style={styles.pageLead}>
               Play games, discover history, and build your knowledge profile.
@@ -210,7 +216,33 @@ export default function ProgressScreen() {
             </ThemedText>
             
             <View style={styles.badgesList}>
-              {data.badges.map((badge, idx) => (
+              {/* Dynamic Completed Year Badges */}
+              {completedYearsList.map((year) => (
+                <View
+                  key={`year-badge-${year}`}
+                  style={[
+                    styles.badgeRowItem,
+                    { borderBottomColor: theme.border },
+                  ]}>
+                  <View style={[styles.badgeIconBox, { backgroundColor: theme.primaryLight }]}>
+                    <ThemedText type="smallBold" style={{ color: theme.primary }}>
+                      YEAR
+                    </ThemedText>
+                  </View>
+
+                  <View style={styles.badgeContentCol}>
+                    <ThemedText type="cardTitle" style={{ fontSize: 18 }}>
+                      {year}
+                    </ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      Completed Year · Mastered in Ludo Historical Duels
+                    </ThemedText>
+                  </View>
+                  <AnnotationTag label="COMPLETED" variant="highlight" />
+                </View>
+              ))}
+
+              {data.badges.map((badge) => (
                 <View
                   key={badge.id}
                   style={[
